@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReGenX | Join the Movement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <style>
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+        
+        body {
+            background-color: #ffffff;
+            color: #1e293b;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        /* Sparkling Blue Fluctuating Border */
+        .sparkle-wrapper {
+            position: relative;
+            padding: 4px;
+            border-radius: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #004e92, #00d4ff, #0083b0);
+            background-size: 300% 300%;
+            animation: sparkle-flow 4s ease infinite;
+        }
+
+        @keyframes sparkle-flow {
+            0% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(0, 212, 255, 0.4); }
+            50% { background-position: 100% 50%; box-shadow: 0 0 20px rgba(0, 212, 255, 0.7); }
+            100% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(0, 212, 255, 0.4); }
+        }
+
+        .auth-card { background: white; position: relative; z-index: 1; }
+
+        /* Earth Animation */
+        .earth-container {
+            font-size: 3rem; 
+            animation: rotate-earth 20s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes rotate-earth {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .label-black {
+            color: #000000 !important;
+            font-weight: 900;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="flex flex-col px-10 py-3 w-full bg-white/80 border-b border-slate-100">
+        <div class="flex justify-between items-center w-full">
+            <div class="text-2xl font-black text-teal-600 font-tech tracking-tighter cursor-pointer" onclick="window.location.href='/home'">
+                Re<span class="text-slate-800">Gen</span>X
+            </div>
+            <div id="nav-user-section" class="flex items-center gap-6">
+                <div class="flex gap-6 text-[10px] font-tech uppercase tracking-widest text-slate-500 font-bold">
+                    <a href="/home" class="hover:text-teal-600">Home</a>
+                    <a href="/dashboard" class="hover:text-teal-600">Dashboard</a>
+                </div>
+                <div id="auth-links">
+                     <a href="/signup" class="text-[10px] font-tech font-bold text-teal-600 border border-teal-500 px-4 py-2 rounded-full">Sign In</a>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-baseline gap-2 mt-1">
+            <span class="h-[1px] w-8 bg-teal-500"></span>
+            <p class="text-lg font-cursive text-slate-800 font-bold">Every step toward green energy... eliminating kinetic waste.</p>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex items-center justify-center px-4">
+        <div class="sparkle-wrapper w-full max-w-md"> 
+            <div class="auth-card p-6 rounded-[2.3rem] text-center">
+                
+                <div class="earth-container mb-1">🌍</div>
+                
+                <h2 id="display-title" class="text-xl font-black font-tech text-slate-900 mb-1 uppercase">Sign Up</h2>
+                <p class="text-slate-500 text-[10px] mb-4">Join the kinetic movement.</p>
+
+                <div id="status-msg" class="hidden text-[11px] p-2 mb-4 rounded-lg font-bold"></div>
+
+                <form id="auth-form" class="space-y-3 text-left">
+                    <div id="username-container">
+                        <label class="label-black ml-2">Username</label>
+                        <input type="text" id="username" placeholder="Choose username" 
+                            class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-teal-500/20 outline-none text-sm">
+                    </div>
+
+                    <div>
+                        <label class="label-black ml-2">Email Address</label>
+                        <input type="email" id="email" placeholder="name@example.com" required 
+                            class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-teal-500/20 outline-none text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="label-black ml-2">Password</label>
+                        <input type="password" id="password" placeholder="Min 8 chars + @" required
+                            class="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-teal-500/20 outline-none text-sm">
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full bg-teal-500 text-white py-3 rounded-xl font-black font-tech uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg mt-2 text-sm">
+                        Sign Up
+                    </button>
+                </form>
+
+                <p id="toggle-text" class="mt-4 text-[10px] text-slate-500 font-bold">
+                    Already have an account? <a href="#" onclick="toggleMode(true)" class="text-teal-600 underline">Login</a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="p-4 text-center text-[8px] text-slate-400 font-tech tracking-widest uppercase">
+        © 2026 ReGenX Kinetic Infrastructure
+    </footer>
+
+    <script>
+        let isLoginMode = false;
+        const statusBox = document.getElementById('status-msg');
+
+        async function checkSession() {
+            const res = await fetch('/api/user');
+            const user = await res.json();
+            const authLinks = document.getElementById('auth-links');
+            if (user) {
+                const firstLetter = user.username.charAt(0).toUpperCase();
+                authLinks.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold font-tech text-xs shadow-md">
+                            ${firstLetter}
+                        </div>
+                        <a href="/logout" class="text-[9px] font-tech text-red-500 font-bold uppercase underline">Logout</a>
+                    </div>
+                `;
+            }
+        }
+        checkSession();
+
+        function showMessage(text, isError = true) {
+            statusBox.innerText = text;
+            statusBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            statusBox.classList.add(isError ? 'bg-red-100' : 'bg-green-100');
+            statusBox.classList.add(isError ? 'text-red-700' : 'text-green-700');
+        }
+
+        function toggleMode(login) {
+            isLoginMode = login;
+            statusBox.classList.add('hidden');
+            document.getElementById('display-title').innerText = login ? "Login" : "Sign Up";
+            document.getElementById('submit-btn').innerText = login ? "Login" : "Sign Up";
+            document.getElementById('username-container').style.display = login ? 'none' : 'block';
+            document.getElementById('toggle-text').innerHTML = login ? 
+                `Don't have an account? <a href="#" onclick="toggleMode(false)" class="text-teal-600 underline">Sign Up</a>` :
+                `Already have an account? <a href="#" onclick="toggleMode(true)" class="text-teal-600 underline">Login</a>`;
+        }
+
+        document.getElementById('auth-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value;
+
+            if (!isLoginMode) {
+                if (password.length < 8) {
+                    return showMessage("Password must be at least 8 characters long.");
+                }
+                if (!password.includes('@')) {
+                    return showMessage("Password must include the '@' symbol.");
+                }
+            }
+
+            try {
+                const endpoint = isLoginMode ? '/api/login' : '/api/signup';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                if (response.ok) {
+                    showMessage(isLoginMode ? "Access Granted! Redirecting..." : "Node Created Successfully!", false);
+                    setTimeout(() => window.location.href = '/dashboard', 1200);
+                } else if (response.status === 409) {
+                    showMessage("Email already registered. Try logging in.");
+                } else {
+                    showMessage("Invalid credentials. Please try again.");
+                }
+            } catch (err) {
+                showMessage("Connection error. Is your server running?");
+            }
+        };
+    </script>
+</body>
+</html>

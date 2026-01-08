@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReGenX | Kinetic Energy Revolution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <style>
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            /* FIX: Set to transparent so the video behind it is visible */
+            background-color: transparent; 
+            color: #ffffff;
+            overflow: hidden; 
+        }
+
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            /* FIX: Set to -3 to be the absolute bottom layer */
+            z-index: -3; 
+            transform: translateX(-50%) translateY(-50%);
+            filter: brightness(0.5) contrast(1.1);
+            object-fit: cover;
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(20, 184, 166, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(20, 184, 166, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: top;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.4); /* Darkened slightly to read text over video */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 20px rgba(45, 212, 191, 0.6);
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <video autoplay muted loop id="bg-video">
+        <source src="/Piezoelectric_Energy_Generation_Video.mp4" type="video/mp4">
+    </video>
+
+    <div class="grid-overlay"></div>
+
+    <nav class="flex flex-col px-12 py-4 w-full z-50 glass-panel border-b border-white/10">
+        <div class="flex justify-between items-center w-full">
+            <div class="text-2xl font-black text-teal-400 font-tech tracking-tighter cursor-pointer" onclick="window.location.href='/home'">
+                Re<span class="text-white">Gen</span>X
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="flex gap-10 text-[10px] font-tech uppercase tracking-[0.2em] text-white/60 font-bold">
+                    <a href="/home" class="text-teal-400 border-b-2 border-teal-400 pb-1">Home</a>
+                    <a href="/dashboard" class="hover:text-teal-400 transition">Dashboard</a>
+                </div>
+                <div id="nav-user-section" class="flex items-center gap-4">
+                    <a href="/signup" id="login-link" class="text-[10px] font-tech font-bold text-teal-400 border border-teal-400 px-4 py-2 rounded-full hover:bg-teal-400/10 transition">Sign In</a>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-baseline gap-2 mt-1">
+            <span class="h-[1px] w-6 bg-teal-400"></span>
+            <p class="text-lg font-cursive text-teal-200/90 font-bold">Every step toward green energy... eliminating kinetic waste.</p>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col items-center justify-center text-center px-6 relative z-10">
+        
+        <div class="max-w-4xl glass-panel p-10 md:p-12 rounded-[3rem] shadow-2xl">
+            <h1 class="text-4xl md:text-6xl font-black font-tech mb-6 tracking-[0.15em] text-white uppercase neon-text leading-tight">
+                YOUR STEPS.<br>
+                <span class="text-teal-400">THEIR POWER.</span>
+            </h1>
+            
+            <p class="text-lg md:text-xl font-cursive text-teal-100/70 mb-10 max-w-2xl mx-auto">
+                Join the kinetic movement. We convert human motion into a sustainable electrical grid.
+            </p>
+            
+            <div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+                <button onclick="window.location.href='/dashboard'" 
+                    class="bg-teal-500 text-white px-10 py-4 rounded-2xl font-black text-xs font-tech uppercase tracking-widest hover:scale-105 transition shadow-lg shadow-teal-500/30">
+                    ⚡ Enter The Grid
+                </button>
+                <button onclick="window.location.href='/signup'" 
+                    class="bg-transparent border border-white/30 text-white px-10 py-4 rounded-2xl font-black text-xs font-tech uppercase tracking-widest hover:bg-white/10 transition">
+                    Register Node
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-12 mt-10 glass-panel px-10 py-6 rounded-full border border-white/5">
+            <div class="text-center">
+                <p class="text-2xl font-black font-tech text-teal-400">11.1 Wh</p>
+                <p class="text-[8px] uppercase tracking-[0.3em] font-bold text-white/40 mt-1">Total Yield</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-black font-tech text-teal-400">222</p>
+                <p class="text-[8px] uppercase tracking-[0.3em] font-bold text-white/40 mt-1">Steps Saved</p>
+            </div>
+            <div class="text-center">
+                <p class="text-2xl font-black font-tech text-teal-400">3 Days</p>
+                <p class="text-[8px] uppercase tracking-[0.3em] font-bold text-white/40 mt-1">Active Streak</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="pb-6 text-center text-[8px] text-white/20 font-tech tracking-[0.5em] uppercase z-10">
+        Infrastructure Protected by ReGenX Protocol © 2026
+    </footer>
+
+    <script>
+        async function updateNavbar() {
+            try {
+                const res = await fetch('/api/user');
+                const user = await res.json();
+                const section = document.getElementById('nav-user-section');
+                if (user) {
+                    const firstLetter = user.username.charAt(0).toUpperCase();
+                    section.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold font-tech text-xs shadow-lg border border-teal-300">
+                                ${firstLetter}
+                            </div>
+                            <a href="/logout" class="text-[9px] font-tech text-red-400 font-bold uppercase tracking-widest hover:underline">Logout</a>
+                        </div>`;
+                }
+            } catch (err) { console.log("Guest Session"); }
+        }
+        updateNavbar();
+    </script>
+</body>
+</html>

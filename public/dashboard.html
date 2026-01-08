@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReGenX | Energy Recreation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <style>
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+       body {
+            background-color: #ffffff;
+            /* Lowering opacity to 0.25 makes the street and crowd detail clearly visible */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.25)), 
+                              url('/images/dashboard.png'); 
+            background-size: cover; 
+            background-attachment: fixed;
+            background-position: center;
+            color: #1e293b;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Stronger glass effect to ensure text remains readable over the detailed image */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88); 
+            backdrop-filter: blur(20px); /* Heavy blur helps stats pop out from the street scene */
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+        }
+        .sparkle-border {
+            position: relative; padding: 3px; border-radius: 2rem;
+            background: linear-gradient(90deg, #00d4ff, #004e92, #00d4ff, #0083b0);
+            background-size: 300% 300%; animation: sparkle-flow 4s ease infinite;
+        }
+        @keyframes sparkle-flow {
+            0% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(0, 212, 255, 0.4); }
+            50% { background-position: 100% 50%; box-shadow: 0 0 20px rgba(0, 212, 255, 0.7); }
+            100% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(0, 212, 255, 0.4); }
+        }
+        .tree-container { position: relative; width: 100%; height: 200px; display: flex; justify-content: center; align-items: flex-end; overflow: visible; }
+        .trunk { width: 14px; background: #5d4037; height: 20px; border-radius: 4px; z-index: 2; transition: height 0.3s; position: relative; }
+        .leaf-shape { position: absolute; background: #14b8a6; border-radius: 0 100% 0 100%; transform: scale(0) rotate(45deg); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 3; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .hex-path { display: flex; gap: 12px; justify-content: center; align-items: center; height: 140px; background: rgba(255, 255, 255, 0.8); border-radius: 1.5rem; }
+        .hexagon { width: 55px; height: 32px; background: #e2e8f0; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); transform: rotateX(30deg); transition: all 0.4s; border-bottom: 4px solid #cbd5e1; }
+        .hex-active { background: #14b8a6; transform: rotateX(30deg) translateZ(20px); box-shadow: 0 10px 30px rgba(20, 184, 166, 0.5); }
+        #man { position: absolute; bottom: 55px; left: -100px; font-size: 38px; transition: all 0.6s ease; z-index: 50; }
+        .chart-wrapper { background: #0f172a; border-radius: 1.5rem; padding: 12px; height: 160px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-10">
+
+    <nav class="flex flex-col px-10 py-3 w-full bg-white/80 border-b border-slate-100 sticky top-0 z-[100]">
+        <div class="flex justify-between items-center w-full">
+            <div class="text-2xl font-black text-teal-600 font-tech tracking-tighter cursor-pointer" onclick="window.location.href='/home'">
+                Re<span class="text-slate-800">Gen</span>X
+            </div>
+            <div class="flex items-center gap-8">
+                <div class="flex gap-6 text-[10px] font-tech uppercase tracking-widest text-slate-500 font-bold">
+                    <a href="/home" class="hover:text-teal-600 transition">Home</a>
+                    <a href="/dashboard" class="text-teal-600 border-b-2 border-teal-500">Dashboard</a>
+                </div>
+                <div id="nav-user-section"></div>
+            </div>
+        </div>
+        <div class="flex items-baseline gap-2 mt-1">
+            <span class="h-[1px] w-8 bg-teal-500"></span>
+            <p class="text-lg font-cursive text-slate-800 font-bold">Every step toward green energy... eliminating kinetic waste.</p>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-4 w-full flex flex-col gap-4">
+        
+        <div class="flex flex-col gap-3 mb-2">
+            <button id="start-btn" class="w-full bg-teal-500 text-white font-tech py-4 rounded-2xl uppercase tracking-widest font-bold shadow-lg hover:bg-teal-600 transition">
+                👣 Start Tracking Energy
+            </button>
+            <button id="stop-btn" class="w-full bg-slate-600 text-white font-tech py-4 rounded-2xl uppercase tracking-widest font-bold shadow-lg hover:bg-slate-700 transition hidden">
+                💾 Stop & Save Session
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="sparkle-border lg:col-span-1">
+                <div class="bg-white p-4 h-full rounded-[1.8rem] flex flex-col items-center justify-between">
+                    <h3 class="text-[10px] text-teal-600 font-tech tracking-widest uppercase font-bold">The Energy Forest</h3>
+                    <div class="tree-container" id="tree-base"><div class="trunk" id="main-trunk"></div></div>
+                    <div class="text-center w-full bg-slate-50 p-2 rounded-xl">
+                        <p class="text-[9px] text-slate-400 font-tech uppercase">CO2 Offset</p>
+                        <p id="co2-val" class="text-xl font-black text-teal-600">0.000g</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                <div class="sparkle-border"><div id="path-container" class="hex-path"><div id="man">🚶</div></div></div>
+                <div class="chart-wrapper relative shadow-2xl border border-slate-700"><canvas id="liveChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+            <div class="bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm text-center">
+                <p class="text-[9px] text-slate-400 font-tech uppercase font-bold">Lifetime Steps (Total)</p>
+                <h2 id="total-steps" class="text-4xl font-black text-slate-800 tabular-nums">0</h2>
+            </div>
+            <div class="bg-teal-50 p-4 rounded-[1.5rem] border border-teal-100 shadow-sm text-center">
+                <p class="text-[9px] text-teal-600 font-tech uppercase font-bold">Lifetime Energy (Wh)</p>
+                <h2 id="total-energy" class="text-4xl font-black text-teal-600 tabular-nums">0.00</h2>
+            </div>
+            <div class="bg-orange-50 p-4 rounded-[1.5rem] border border-orange-100 shadow-sm text-center">
+                <p class="text-[9px] text-orange-600 font-tech uppercase font-bold">Voltage Pulse</p>
+                <h2 id="live-v" class="text-4xl font-black text-orange-600 tabular-nums">0.0V</h2>
+            </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-[2.5rem] mt-6 shadow-sm border border-slate-100">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-6 bg-teal-500 rounded-full"></div>
+                    <h3 class="font-tech text-slate-800 uppercase text-xs font-bold tracking-widest">Energy Generation History</h3>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btn-day" onclick="updateHistoryUI('day')" class="t-btn bg-slate-100 text-slate-500 px-4 py-2 rounded-lg text-[9px] font-tech font-bold uppercase transition hover:bg-teal-100">Day</button>
+                    <button id="btn-week" onclick="updateHistoryUI('week')" class="t-btn bg-teal-500 text-white px-4 py-2 rounded-lg text-[9px] font-tech font-bold uppercase transition">Week</button>
+                    <button id="btn-month" onclick="updateHistoryUI('month')" class="t-btn bg-slate-100 text-slate-500 px-4 py-2 rounded-lg text-[9px] font-tech font-bold uppercase transition hover:bg-teal-100">Month</button>
+                    <button id="btn-year" onclick="updateHistoryUI('year')" class="t-btn bg-slate-100 text-slate-500 px-4 py-2 rounded-lg text-[9px] font-tech font-bold uppercase transition hover:bg-teal-100">Year</button>
+                </div>
+            </div>
+
+            <div class="h-[250px] w-full mb-8">
+                <canvas id="historyChart"></canvas>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+                    <p class="text-[8px] text-slate-400 font-tech uppercase">Range Steps</p>
+                    <h4 id="hist-total-steps" class="text-xl font-black text-slate-800">0</h4>
+                </div>
+                <div class="bg-teal-50 p-4 rounded-2xl text-center border border-teal-100">
+                    <p class="text-[8px] text-teal-600 font-tech uppercase">Range Energy</p>
+                    <h4 id="hist-total-energy" class="text-xl font-black text-teal-600">0.00 Wh</h4>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+                    <p class="text-[8px] text-slate-400 font-tech uppercase">Avg per Session</p>
+                    <h4 id="hist-avg" class="text-xl font-black text-slate-800">0.00 Wh</h4>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+                    <p class="text-[8px] text-slate-400 font-tech uppercase">Active Days</p>
+                    <h4 id="hist-active-days" class="text-xl font-black text-slate-800">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let sessionSteps = 0; let hexIdx = 0; let lastPulseTime = 0;
+        let isTracking = false;
+        let userData = null;
+        let historyChartInstance = null;
+
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+
+        startBtn.onclick = () => { isTracking = true; sessionSteps = 0; startBtn.classList.add('hidden'); stopBtn.classList.remove('hidden'); };
+        
+        stopBtn.onclick = async () => {
+            isTracking = false;
+            const res = await fetch('/api/save-session', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ steps: sessionSteps, energy: sessionSteps * 0.05 }) 
+            });
+            if(res.ok) {
+                await fetchUserAndInit(); 
+                startBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+                sessionSteps = 0;
+                document.getElementById('co2-val').innerText = "0.000g";
+            }
+        };
+
+        const ctx = document.getElementById('liveChart').getContext('2d');
+        const liveChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Array(50).fill(''), datasets: [{ data: Array(50).fill(0), borderColor: '#f97316', borderWidth: 2, tension: 0.3, fill: true, backgroundColor: 'rgba(249, 115, 22, 0.1)', pointRadius: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { min: 0, max: 10, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 } } }, x: { display: false } }, plugins: { legend: { display: false } } }
+        });
+
+        const histCtx = document.getElementById('historyChart').getContext('2d');
+        historyChartInstance = new Chart(histCtx, {
+            type: 'bar',
+            plugins: [ChartDataLabels], // ENERGY CREATED ABOVE BARS
+            data: { labels: [], datasets: [{ label: 'Energy (Wh)', data: [], backgroundColor: '#14b8a6', borderRadius: 8, barThickness: 45 }] },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#1e293b',
+                        font: { family: 'Orbitron', size: 11, weight: 'bold' },
+                        formatter: (val) => val > 0 ? val.toFixed(2) + " Wh" : ""
+                    }
+                },
+                scales: { 
+                    y: { display: false, beginAtZero: true }, // REMOVED Y-AXIS NUMBERS
+                    x: { grid: { display: false }, ticks: { font: { family: 'Orbitron', size: 10 }, color: '#64748b' } } 
+                }
+            }
+        });
+
+        function updateHistoryUI(range) {
+            if(!userData || !userData.history) return;
+            
+            document.querySelectorAll('.t-btn').forEach(b => {
+                b.classList.replace('bg-teal-500', 'bg-slate-100');
+                b.classList.replace('text-white', 'text-slate-500');
+            });
+            const activeBtn = document.getElementById(`btn-${range}`);
+            if(activeBtn) {
+                activeBtn.classList.replace('bg-slate-100', 'bg-teal-500');
+                activeBtn.classList.replace('text-slate-500', 'text-white');
+            }
+
+            const now = new Date();
+            let filtered = userData.history.filter(h => {
+                const d = new Date(h.date);
+                if(range === 'day') return d.toDateString() === now.toDateString();
+                if(range === 'week') return (now - d) / (1000*60*60*24) <= 7;
+                if(range === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                return d.getFullYear() === now.getFullYear();
+            });
+
+            // LOGICAL LABELS: Mon/Tue for Week, January/February for Month, 2026 for Year
+            historyChartInstance.data.labels = filtered.map(h => {
+                const d = new Date(h.date);
+                if(range === 'day') return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                if(range === 'week') return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }); // "Mon 7"
+                if(range === 'month') return d.toLocaleDateString('en-US', { month: 'long' }); // "January"
+                if(range === 'year') return d.getFullYear().toString(); // "2026"
+                return d.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+            });
+            
+            historyChartInstance.data.datasets[0].data = filtered.map(h => h.energy);
+            historyChartInstance.update();
+
+            document.getElementById('hist-total-steps').innerText = filtered.reduce((a, b) => a + b.steps, 0);
+            document.getElementById('hist-total-energy').innerText = filtered.reduce((a, b) => a + b.energy, 0).toFixed(2) + " Wh";
+            document.getElementById('hist-avg').innerText = filtered.length ? (filtered.reduce((a,b)=>a+b.energy,0) / filtered.length).toFixed(2) + " Wh" : "0.00 Wh";
+            document.getElementById('hist-active-days').innerText = [...new Set(filtered.map(h => new Date(h.date).toDateString()))].length;
+        }
+
+        async function fetchUserAndInit() {
+            const res = await fetch('/api/user');
+            userData = await res.json();
+            if (userData) {
+                document.getElementById('total-steps').innerText = userData.lifetimeSteps || 0;
+                document.getElementById('total-energy').innerText = (userData.lifetimeEnergy || 0).toFixed(2);
+                const firstLetter = userData.username.charAt(0).toUpperCase();
+                document.getElementById('nav-user-section').innerHTML = `<div class="flex items-center gap-4"><div class="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold font-tech text-xs shadow-lg border border-teal-400">${firstLetter}</div><a href="/logout" class="text-[9px] font-tech text-red-500 font-bold uppercase underline">Logout</a></div>`;
+                updateHistoryUI('week');
+            }
+        }
+
+        socket.on('update-ui', (data) => {
+            if(!isTracking) return;
+            const volt = parseFloat(data.voltage);
+            lastPulseTime = Date.now();
+            liveChart.data.datasets[0].data[liveChart.data.datasets[0].data.length - 1] = volt;
+            liveChart.update('none');
+            document.getElementById('live-v').innerText = volt.toFixed(1) + "V";
+            if(volt > 0.5) {
+                sessionSteps++;
+                // LIVE UI INCREMENT: UPDATES TOP BOXES IMMEDIATELY
+                const stepBox = document.getElementById('total-steps');
+                const energyBox = document.getElementById('total-energy');
+                stepBox.innerText = parseInt(stepBox.innerText) + 1;
+                energyBox.innerText = (parseFloat(energyBox.innerText) + 0.05).toFixed(2);
+                
+                document.getElementById('co2-val').innerText = (sessionSteps * 0.008).toFixed(3) + "g";
+                document.querySelectorAll('.hexagon').forEach(h => h.classList.remove('hex-active'));
+                const target = document.getElementById(`hex-${hexIdx % 10}`);
+                target.classList.add('hex-active');
+                document.getElementById('man').style.left = (target.offsetLeft - 10) + "px";
+                hexIdx++;
+                growTree(sessionSteps);
+            }
+        });
+
+        setInterval(() => {
+            if(!isTracking) return;
+            const now = Date.now();
+            if (now - lastPulseTime > 300) {
+                liveChart.data.datasets[0].data.shift();
+                liveChart.data.datasets[0].data.push(0);
+                document.getElementById('live-v').innerText = "0.0V";
+                liveChart.update('none');
+            }
+        }, 100);
+
+        function growTree(steps) {
+            const trunk = document.getElementById('main-trunk');
+            const treeBase = document.getElementById('tree-base');
+            const trunkHeight = 20 + (Math.min(steps, 50) * 3);
+            trunk.style.height = trunkHeight + 'px';
+            if (steps % 2 === 0) {
+                const leaf = document.createElement('div');
+                leaf.className = 'leaf-shape';
+                const size = 18 + Math.random() * 12;
+                leaf.style.width = size + 'px'; leaf.style.height = size + 'px';
+                const angle = (Math.random() * Math.PI) - (Math.PI / 2); 
+                const dist = 10 + Math.random() * 60;
+                const x = Math.sin(angle) * dist; const y = trunkHeight + Math.cos(angle) * dist - 30;
+                leaf.style.bottom = y + 'px'; leaf.style.left = `calc(50% + ${x}px - ${size/2}px)`;
+                treeBase.appendChild(leaf);
+                setTimeout(() => leaf.style.transform = `scale(1) rotate(${Math.random() * 360}deg)`, 50);
+            }
+        }
+
+        const container = document.getElementById('path-container');
+        for (let i = 0; i < 10; i++) {
+            const hex = document.createElement('div');
+            hex.className = 'hexagon'; hex.id = `hex-${i}`;
+            container.appendChild(hex);
+        }
+
+        fetchUserAndInit();
+        window.addEventListener('keydown', (e) => { if (e.key.toLowerCase() === 's' && !e.repeat) socket.emit('step-pulse', { voltage: (Math.random() * 5 + 4).toFixed(1) }); });
+    </script>
+</body>
+</html>

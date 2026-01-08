@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReGenX | Kinetic Energy Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        .font-tech { font-family: 'Orbitron', sans-serif; }
+        
+        body {
+            background: url('images/background.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        /* DYNAMIC NEON GLOW */
+        .neon-glow { 
+            color: #ffffff;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+        }
+
+        .blue-accent {
+            color: #00e5ff;
+            filter: drop-shadow(0 0 12px rgba(0, 229, 255, 1));
+        }
+
+        /* RESIZABLE GLASS BOX */
+        .glass-box {
+            background: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden; /* Clips the wave animation inside */
+            
+            /* Box Sizing Controls */
+            width: 600px;  
+            min-height: 500px; 
+            padding: 60px;
+        }
+
+        /* THE ENERGY WAVE ANIMATION */
+        .energy-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(transparent, rgba(0, 229, 255, 0.2));
+            border-top: 2px solid rgba(0, 229, 255, 0.5);
+            animation: wave-float 2s infinite ease-in-out;
+        }
+
+        @keyframes wave-float {
+            0%, 100% { height: 30px; opacity: 0.3; }
+            50% { height: 60px; opacity: 0.6; }
+        }
+
+        /* BUTTON STYLE */
+        .btn-live {
+            background: #00e5ff;
+            color: #000;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+        }
+
+        .btn-live:hover {
+            background: #fff;
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
+        }
+
+        /* SYNC PULSE EFFECT */
+        .step-pulse { 
+            animation: pulse-frame 0.5s ease-out; 
+        }
+        
+        @keyframes pulse-frame {
+            0% { border-color: rgba(0, 229, 255, 0.2); transform: scale(1); }
+            50% { border-color: #00e5ff; box-shadow: 0 0 50px rgba(0, 229, 255, 0.3); transform: scale(1.02); }
+            100% { border-color: rgba(0, 229, 255, 0.2); transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="overlay"></div>
+
+    <main class="h-screen flex flex-col items-center justify-center p-4">
+        <div id="main-ui" class="glass-box rounded-[4rem] text-center transition-all flex flex-col items-center justify-center">
+            
+            <h1 class="font-tech text-6xl md:text-7xl font-black neon-glow mb-2 tracking-tighter">
+                Re<span class="blue-accent">Gen</span>X
+            </h1>
+            
+            <p class="text-cyan-400 font-tech text-[10px] tracking-[0.4em] mb-12 uppercase opacity-90">
+                Urban Kinetic Harvester
+            </p>
+            
+            <div class="mb-12 relative z-10">
+                <p class="text-[11px] text-gray-400 uppercase tracking-widest mb-3 font-bold">Generation Pulse</p>
+                <div class="text-8xl font-tech font-black text-white neon-glow transition-all duration-300">
+                    <span id="v-meter">0.0</span><span class="text-2xl text-gray-600 ml-2">V</span>
+                </div>
+            </div>
+
+           <div class="flex flex-col gap-6 items-center relative z-10 w-full">
+    <button onclick="window.location.href='/home'" class="btn-live px-14 py-4 font-tech font-bold rounded-2xl text-xs tracking-widest uppercase">
+        EXPLORE LIVE GRID
+    </button>
+    <span class="text-gray-500 text-[10px] font-tech uppercase tracking-[0.3em] mt-2 animate-pulse">
+        Simulator: Tap Space to Step
+    </span>
+</div>
+
+            <div id="wave-visual" class="energy-wave"></div>
+        </div>
+    </main>
+
+    <script>
+        const socket = io();
+        const vMeter = document.getElementById('v-meter');
+        const mainUI = document.getElementById('main-ui');
+        const wave = document.getElementById('wave-visual');
+
+        socket.on('update-ui', (data) => {
+            vMeter.innerText = data.voltage;
+            
+            // Trigger visual animations
+            mainUI.classList.add('step-pulse');
+            wave.style.background = "linear-gradient(transparent, rgba(0, 229, 255, 0.6))";
+            
+            setTimeout(() => {
+                mainUI.classList.remove('step-pulse');
+                wave.style.background = "linear-gradient(transparent, rgba(0, 229, 255, 0.2))";
+            }, 500);
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'Space') {
+                const volt = (Math.random() * 4 + 1.2).toFixed(1);
+                socket.emit('step-pulse', { voltage: volt });
+            }
+        });
+    </script>
+</body>
+</html>
